@@ -1,9 +1,11 @@
 import { slugReservado } from './_core/slugs-reservados'
 import type { ToolEntrada, ToolManifest } from './_core/types'
 import { cepManifest } from './cep/manifest'
+import { qrcodeManifest } from './qrcode/manifest'
 
 const tools: ToolEntrada[] = [
   { manifest: cepManifest, carregar: () => import('./cep/cep-tool') },
+  { manifest: qrcodeManifest, carregar: () => import('./qrcode/qrcode-tool') },
 ]
 
 const validarSlugs = (entradas: ToolEntrada[]) => {
