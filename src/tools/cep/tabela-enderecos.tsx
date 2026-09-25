@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { baixarArquivo } from '@/lib/baixar-arquivo'
 
 import { LIMITE_VIACEP } from './constantes'
 import type { BuscaReversa } from './consultar-cep'
@@ -39,19 +40,11 @@ const TabelaEnderecos = ({ busca, uf, cidade }: TabelaEnderecosProps) => {
     )
   }, [busca.enderecos, filtro])
 
-  const baixarCsv = () => {
-    const blob = new Blob([gerarCsv(visiveis)], {
-      type: 'text/csv;charset=utf-8',
-    })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-
-    link.href = url
-    link.download = `cep-${uf}-${cidade}.csv`.replace(/\s+/g, '-').toLowerCase()
-    link.click()
-
-    URL.revokeObjectURL(url)
-  }
+  const baixarCsv = () =>
+    baixarArquivo(
+      new Blob([gerarCsv(visiveis)], { type: 'text/csv;charset=utf-8' }),
+      `cep-${uf}-${cidade}.csv`.replace(/\s+/g, '-').toLowerCase(),
+    )
 
   return (
     <div className="flex flex-col gap-3">
