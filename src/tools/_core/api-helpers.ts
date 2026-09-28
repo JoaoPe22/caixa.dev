@@ -20,6 +20,16 @@ type BuscarOpts<T> = {
 const TIMEOUT_PADRAO_MS = 5_000
 const NAO_INDEXAR = { 'X-Robots-Tag': 'noindex, nofollow' }
 
+class ErroUpstream extends Error {
+  readonly status: number
+
+  constructor(status: number) {
+    super(`upstream respondeu ${status}`)
+    this.name = 'ErroUpstream'
+    this.status = status
+  }
+}
+
 const respostaOk = <T>(data: T, revalidate: number) =>
   Response.json({ ok: true, data } satisfies Envelope<T>, {
     headers: {
@@ -58,7 +68,7 @@ const buscarJson = async <T>(url: string, opts: BuscarOpts<T>): Promise<T> => {
   })
 
   if (!resposta.ok) {
-    throw new Error(`upstream respondeu ${resposta.status}`)
+    throw new ErroUpstream(resposta.status)
   }
 
   return opts.schema.parse(await resposta.json())
@@ -103,6 +113,7 @@ export {
   comTratamentoDeErro,
   erroEntradaInvalida,
   erroNaoEncontrado,
+  ErroUpstream,
   respostaOk,
 }
 export type { Envelope, ErroApi }
