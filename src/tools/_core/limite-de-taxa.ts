@@ -2,6 +2,8 @@ import { type Duration, Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { headers } from 'next/headers'
 
+import { LimiteExcedidoError } from './erros'
+
 type RegraDeLimite = {
   nome: string
   requisicoes: number
@@ -9,18 +11,6 @@ type RegraDeLimite = {
 }
 
 const TIMEOUT_REDIS_MS = 1_000
-
-class LimiteExcedidoError extends Error {
-  readonly segundosParaLiberar: number
-
-  constructor(segundosParaLiberar: number) {
-    super(
-      `Muitas consultas em pouco tempo. Aguarde ${segundosParaLiberar} segundos e tente de novo.`,
-    )
-    this.name = 'LimiteExcedidoError'
-    this.segundosParaLiberar = segundosParaLiberar
-  }
-}
 
 let redis: Redis | null | undefined
 const limitadores = new Map<string, Ratelimit>()
@@ -104,5 +94,5 @@ const garantirLimite = async (regra: RegraDeLimite, identificador?: string) => {
   }
 }
 
-export { garantirLimite, LimiteExcedidoError }
+export { garantirLimite }
 export type { RegraDeLimite }

@@ -1,10 +1,15 @@
-import { LimiteExcedidoError } from '@/tools/_core/limite-de-taxa'
+import { formatarCep, normalizarCep } from '@/shared/brasil/cep'
+import { mensagemDeFalha } from '@/tools/_core/mensagens'
 import type { ToolProps, ToolSearchParams } from '@/tools/_core/types'
 
 import { CepForm } from './cep-form'
-import type { BuscaReversa, CepResultado } from './consultar-cep'
+import {
+  MENSAGEM_CEP_INVALIDO,
+  MENSAGEM_CEP_NAO_ENCONTRADO,
+  mensagemEnderecoNaoEncontrado,
+} from './constantes'
 import { buscarEnderecos, consultarCep } from './consultar-cep'
-import { formatarCep, normalizarCep } from './normalizar-cep'
+import type { BuscaReversa, CepResultado } from './tipos'
 import { validarBuscaReversa } from './validar-busca'
 
 const texto = (params: ToolSearchParams, chave: string) => {
@@ -12,11 +17,6 @@ const texto = (params: ToolSearchParams, chave: string) => {
 
   return (Array.isArray(valor) ? (valor[0] ?? '') : (valor ?? '')).trim()
 }
-
-const mensagemDeFalha = (falha: unknown) =>
-  falha instanceof LimiteExcedidoError
-    ? falha.message
-    : 'Não foi possível consultar agora. Tente de novo.'
 
 const CepTool = async ({ args, searchParams }: ToolProps) => {
   const uf = texto(searchParams, 'uf').toUpperCase()
@@ -32,7 +32,7 @@ const CepTool = async ({ args, searchParams }: ToolProps) => {
         const encontrado = await buscarEnderecos(uf, cidade, rua)
 
         if (encontrado.enderecos.length === 0) {
-          erro = `Nenhum endereço encontrado para "${rua}" em ${cidade}.`
+          erro = mensagemEnderecoNaoEncontrado(rua, cidade)
         } else {
           busca = encontrado
         }
@@ -61,7 +61,7 @@ const CepTool = async ({ args, searchParams }: ToolProps) => {
           rua: '',
           resultado: null,
           busca: null,
-          erro: bruto ? 'Informe um CEP com 8 dígitos.' : null,
+          erro: bruto ? MENSAGEM_CEP_INVALIDO : null,
         }}
       />
     )
@@ -74,7 +74,7 @@ const CepTool = async ({ args, searchParams }: ToolProps) => {
     resultado = await consultarCep(cep)
 
     if (!resultado) {
-      erro = 'CEP não encontrado.'
+      erro = MENSAGEM_CEP_NAO_ENCONTRADO
     }
   } catch (falha) {
     erro = mensagemDeFalha(falha)

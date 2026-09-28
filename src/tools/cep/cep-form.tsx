@@ -1,23 +1,21 @@
 'use client'
 
 import { EraserIcon, SearchIcon } from 'lucide-react'
-import type { ChangeEvent, FormEvent, ReactNode } from 'react'
-import { useMemo, useRef, useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
+import { useRef, useState } from 'react'
 
-import { CampoSugestoes } from '@/components/campo-sugestoes'
+import { Alerta } from '@/components/alerta'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ValorCopiavel } from '@/components/valor-copiavel'
-import { normalizarTexto } from '@/lib/texto'
-import { ufs } from '@/shared/brasil/ufs'
-import type { Envelope } from '@/tools/_core/api-helpers'
+import { formatarCep, normalizarCep } from '@/shared/brasil/cep'
+import { consultarApi } from '@/tools/_core/cliente-api'
 
-import { LIMITE_SUGESTOES, MINIMO_TERMO } from './constantes'
-import type { BuscaReversa, CepResultado } from './consultar-cep'
-import { formatarCep, normalizarCep } from './normalizar-cep'
+import { MENSAGEM_CEP_INVALIDO } from './constantes'
+import { FormPorEndereco } from './form-por-endereco'
 import { TabelaEnderecos } from './tabela-enderecos'
-import { useMunicipios } from './use-municipios'
-import { useSugestoesDeRua } from './use-sugestoes-de-rua'
+import type { BuscaReversa, CepResultado } from './tipos'
+import type { BuscaReversaEntrada } from './validar-busca'
 import { validarBuscaReversa } from './validar-busca'
 
 type EstadoInicial = {
@@ -36,15 +34,6 @@ type CepFormProps = {
 
 type Consulta = 'cep' | 'endereco' | null
 
-const classeSelect =
-  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30 dark:scheme-dark'
-
-const Rotulo = ({ children }: { children: ReactNode }) => (
-  <span className="text-xs font-medium text-muted-foreground uppercase">
-    {children}
-  </span>
-)
-
 const camposDoResultado = (resultado: CepResultado) =>
   [
     { rotulo: 'CEP', valor: resultado.cep },
@@ -61,9 +50,6 @@ const camposDoResultado = (resultado: CepResultado) =>
     { rotulo: 'Mesorregião', valor: resultado.mesorregiao ?? '' },
   ].filter((campo) => campo.valor.trim().length > 0)
 
-const plural = (quantidade: number, singular: string, varios: string) =>
-  `${quantidade} ${quantidade === 1 ? singular : varios}`
-
 const CepForm = ({ inicial }: CepFormProps) => {
   const [cep, setCep] = useState(inicial.cep)
   const [uf, setUf] = useState(inicial.uf)
@@ -74,49 +60,6 @@ const CepForm = ({ inicial }: CepFormProps) => {
   const [erro, setErro] = useState(inicial.erro)
   const [consultando, setConsultando] = useState<Consulta>(null)
   const campoCepRef = useRef<HTMLInputElement>(null)
-
-  const municipiosDaUf = useMunicipios(uf)
-
-  const cidadeNormalizada = normalizarTexto(cidade)
-
-  const municipiosIndexados = useMemo(
-    () =>
-      municipiosDaUf.municipios.map((municipio) => ({
-        municipio,
-        chave: normalizarTexto(municipio.nome),
-      })),
-    [municipiosDaUf.municipios],
-  )
-
-  const municipioEscolhido =
-    municipiosIndexados.find((item) => item.chave === cidadeNormalizada)
-      ?.municipio ?? null
-
-  const municipiosFiltrados = useMemo(
-    () =>
-      municipiosIndexados
-        .filter((item) => item.chave.includes(cidadeNormalizada))
-        .sort(
-          (a, b) =>
-            Number(!a.chave.startsWith(cidadeNormalizada)) -
-            Number(!b.chave.startsWith(cidadeNormalizada)),
-        ),
-    [municipiosIndexados, cidadeNormalizada],
-  )
-
-  const cidadeValida =
-    municipiosIndexados.length > 0
-      ? municipioEscolhido !== null
-      : cidade.trim().length >= MINIMO_TERMO
-
-  const cidadeParaBusca = municipioEscolhido?.nome ?? cidade.trim()
-
-  const sugestoesDeRua = useSugestoesDeRua(
-    uf,
-    cidadeParaBusca,
-    rua,
-    Boolean(uf) && cidadeValida,
-  )
 
   const limparResultados = () => {
     setResultado(null)
@@ -157,17 +100,25 @@ const CepForm = ({ inicial }: CepFormProps) => {
     setRua('')
   }
 
-  const executar = async (tipo: Consulta, acao: () => Promise<void>) => {
+  const consultar = async <T,>(
+    tipo: Consulta,
+    url: string,
+    aplicar: (dados: T) => void,
+    enderecoDaPagina: string,
+  ) => {
     setConsultando(tipo)
     setErro(null)
 
-    try {
-      await acao()
-    } catch {
-      limparResultados()
-      setErro('Não foi possível consultar agora. Tente de novo.')
-    } finally {
-      setConsultando(null)
+    const envelope = await consultarApi<T>(url)
+
+    setConsultando(null)
+    limparResultados()
+
+    if (envelope.ok) {
+      aplicar(envelope.data)
+      window.history.replaceState(null, '', enderecoDaPagina)
+    } else {
+      setErro(envelope.erro.mensagem)
     }
   }
 
@@ -178,33 +129,20 @@ const CepForm = ({ inicial }: CepFormProps) => {
 
     if (!cepNormalizado) {
       limparResultados()
-      setErro('Informe um CEP com 8 dígitos.')
+      setErro(MENSAGEM_CEP_INVALIDO)
       return
     }
 
-    void executar('cep', async () => {
-      const resposta = await fetch(`/api/cep?cep=${cepNormalizado}`)
-      const envelope = (await resposta.json()) as Envelope<CepResultado>
-
-      limparResultados()
-
-      if (envelope.ok) {
-        setResultado(envelope.data)
-        window.history.replaceState(null, '', `/cep/${cepNormalizado}`)
-      } else {
-        setErro(envelope.erro.mensagem)
-      }
-    })
+    void consultar<CepResultado>(
+      'cep',
+      `/api/cep?cep=${cepNormalizado}`,
+      setResultado,
+      `/cep/${cepNormalizado}`,
+    )
   }
 
-  const consultarPorEndereco = (evento: FormEvent<HTMLFormElement>) => {
-    evento.preventDefault()
-
-    const invalido = validarBuscaReversa({
-      uf,
-      cidade: cidadeParaBusca,
-      rua,
-    })
+  const consultarPorEndereco = (entrada: BuscaReversaEntrada) => {
+    const invalido = validarBuscaReversa(entrada)
 
     if (invalido) {
       limparResultados()
@@ -212,46 +150,19 @@ const CepForm = ({ inicial }: CepFormProps) => {
       return
     }
 
-    void executar('endereco', async () => {
-      const query = new URLSearchParams({
-        uf,
-        cidade: cidadeParaBusca,
-        rua: rua.trim(),
-      })
-      const resposta = await fetch(`/api/cep?${query}`)
-      const envelope = (await resposta.json()) as Envelope<BuscaReversa>
-
-      limparResultados()
-
-      if (envelope.ok) {
-        setBusca(envelope.data)
-        window.history.replaceState(null, '', `/cep?${query}`)
-      } else {
-        setErro(envelope.erro.mensagem)
-      }
+    const query = new URLSearchParams({
+      uf: entrada.uf,
+      cidade: entrada.cidade,
+      rua: entrada.rua.trim(),
     })
+
+    void consultar<BuscaReversa>(
+      'endereco',
+      `/api/cep?${query}`,
+      setBusca,
+      `/cep?${query}`,
+    )
   }
-
-  const mensagemCidade = !uf
-    ? 'Escolha o estado primeiro.'
-    : municipiosDaUf.erro
-      ? municipiosDaUf.erro
-      : 'Nenhum município encontrado.'
-
-  const mensagemRua = !sugestoesDeRua.ativo
-    ? `Digite pelo menos ${MINIMO_TERMO} letras.`
-    : sugestoesDeRua.cepUnico
-      ? `Esta cidade tem CEP único: ${sugestoesDeRua.cepUnico}`
-      : (sugestoesDeRua.erro ?? 'Nenhuma rua encontrada.')
-
-  const rodapeCidade =
-    municipiosFiltrados.length > LIMITE_SUGESTOES
-      ? `Mostrando ${LIMITE_SUGESTOES} de ${municipiosFiltrados.length}. Continue digitando.`
-      : null
-
-  const rodapeRua = sugestoesDeRua.truncado
-    ? 'Lista parcial: o ViaCEP devolve no máximo 50 CEPs. Continue digitando.'
-    : null
 
   const cepUnicoDaBusca =
     busca && busca.enderecos.every((endereco) => !endereco.logradouro)
@@ -299,87 +210,20 @@ const CepForm = ({ inicial }: CepFormProps) => {
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold">Pelo endereço</h2>
 
-        <form
-          onSubmit={consultarPorEndereco}
-          className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_auto]"
-        >
-          <label className="flex flex-col gap-1.5">
-            <Rotulo>Estado</Rotulo>
-            <select
-              value={uf}
-              onChange={(evento) => aoMudarUf(evento.target.value)}
-              className={classeSelect}
-            >
-              <option value="">Selecione…</option>
-              {ufs.map((estado) => (
-                <option key={estado.sigla} value={estado.sigla}>
-                  {estado.nome} ({estado.sigla})
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex flex-col gap-1.5">
-            <Rotulo>Cidade / Município</Rotulo>
-            <CampoSugestoes
-              rotulo="Cidade ou município"
-              valor={cidade}
-              aoMudar={aoMudarCidade}
-              aoEscolher={(sugestao) => aoMudarCidade(sugestao.rotulo)}
-              sugestoes={municipiosFiltrados
-                .slice(0, LIMITE_SUGESTOES)
-                .map(({ municipio }) => ({
-                  valor: municipio.ibge,
-                  rotulo: municipio.nome,
-                }))}
-              carregando={municipiosDaUf.carregando}
-              mensagemVazia={mensagemCidade}
-              rodape={rodapeCidade}
-              placeholder={uf ? 'Digite para filtrar' : 'Escolha o estado'}
-              disabled={!uf}
-            />
-          </label>
-
-          <label className="flex flex-col gap-1.5">
-            <Rotulo>
-              Rua{' '}
-              <span className="normal-case">(mín. {MINIMO_TERMO} letras)</span>
-            </Rotulo>
-            <CampoSugestoes
-              rotulo="Rua"
-              valor={rua}
-              aoMudar={setRua}
-              aoEscolher={(sugestao) => setRua(sugestao.valor)}
-              sugestoes={sugestoesDeRua.ruas.map((ruaSugerida) => ({
-                valor: ruaSugerida.nome,
-                rotulo: ruaSugerida.nome,
-                detalhe: `${plural(ruaSugerida.ceps, 'CEP', 'CEPs')} · ${plural(ruaSugerida.bairros, 'bairro', 'bairros')}`,
-              }))}
-              carregando={sugestoesDeRua.carregando}
-              mensagemVazia={mensagemRua}
-              rodape={rodapeRua}
-              placeholder={
-                cidadeValida ? 'Avenida Brasil' : 'Escolha a cidade na lista'
-              }
-              disabled={!uf || !cidadeValida}
-            />
-          </label>
-
-          <Button type="submit" disabled={consultando !== null}>
-            <SearchIcon className="size-4" />
-            {consultando === 'endereco' ? 'Consultando…' : 'Consultar'}
-          </Button>
-        </form>
+        <FormPorEndereco
+          uf={uf}
+          cidade={cidade}
+          rua={rua}
+          aoMudarUf={aoMudarUf}
+          aoMudarCidade={aoMudarCidade}
+          aoMudarRua={setRua}
+          aoConsultar={consultarPorEndereco}
+          consultando={consultando === 'endereco'}
+          desabilitado={consultando !== null}
+        />
       </section>
 
-      {erro ? (
-        <p
-          role="status"
-          className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm"
-        >
-          {erro}
-        </p>
-      ) : null}
+      {erro ? <Alerta>{erro}</Alerta> : null}
 
       {resultado ? (
         <div role="status" className="rounded-lg border px-4">
@@ -408,9 +252,7 @@ const CepForm = ({ inicial }: CepFormProps) => {
         </div>
       ) : null}
 
-      {busca && !cepUnicoDaBusca ? (
-        <TabelaEnderecos busca={busca} uf={uf} cidade={cidadeParaBusca} />
-      ) : null}
+      {busca && !cepUnicoDaBusca ? <TabelaEnderecos busca={busca} /> : null}
     </div>
   )
 }

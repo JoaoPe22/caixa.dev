@@ -4,26 +4,26 @@ import { DownloadIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
 
+import { Alerta } from '@/components/alerta'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { baixarArquivo } from '@/lib/baixar-arquivo'
+import { normalizarTexto } from '@/lib/texto'
+import { normalizarCep } from '@/shared/brasil/cep'
 
 import { LIMITE_VIACEP } from './constantes'
-import type { BuscaReversa } from './consultar-cep'
 import { gerarCsv } from './gerar-csv'
-import { normalizarCep } from './normalizar-cep'
+import type { BuscaReversa } from './tipos'
 
 type TabelaEnderecosProps = {
   busca: BuscaReversa
-  uf: string
-  cidade: string
 }
 
-const TabelaEnderecos = ({ busca, uf, cidade }: TabelaEnderecosProps) => {
+const TabelaEnderecos = ({ busca }: TabelaEnderecosProps) => {
   const [filtro, setFiltro] = useState('')
 
   const visiveis = useMemo(() => {
-    const alvo = filtro.trim().toLowerCase()
+    const alvo = normalizarTexto(filtro)
 
     if (!alvo) {
       return busca.enderecos
@@ -36,15 +36,20 @@ const TabelaEnderecos = ({ busca, uf, cidade }: TabelaEnderecosProps) => {
         endereco.complemento,
         endereco.bairro,
         endereco.cidade,
-      ].some((campo) => campo.toLowerCase().includes(alvo)),
+      ].some((campo) => normalizarTexto(campo).includes(alvo)),
     )
   }, [busca.enderecos, filtro])
 
-  const baixarCsv = () =>
+  const baixarCsv = () => {
+    const referencia = busca.enderecos[0]
+
     baixarArquivo(
       new Blob([gerarCsv(visiveis)], { type: 'text/csv;charset=utf-8' }),
-      `cep-${uf}-${cidade}.csv`.replace(/\s+/g, '-').toLowerCase(),
+      `cep-${referencia?.uf ?? ''}-${referencia?.cidade ?? ''}.csv`
+        .replace(/\s+/g, '-')
+        .toLowerCase(),
     )
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -65,14 +70,14 @@ const TabelaEnderecos = ({ busca, uf, cidade }: TabelaEnderecosProps) => {
 
       <p className="text-sm text-muted-foreground">
         {visiveis.length} de {busca.enderecos.length} exibidos
-        {busca.truncado ? (
-          <span className="text-amber-600 dark:text-amber-500">
-            {' '}
-            — o ViaCEP corta em {LIMITE_VIACEP} e não pagina. Refine a rua para
-            ver o resto.
-          </span>
-        ) : null}
       </p>
+
+      {busca.truncado ? (
+        <Alerta variante="aviso">
+          O ViaCEP corta em {LIMITE_VIACEP} e não pagina. Refine a rua para ver
+          o resto.
+        </Alerta>
+      ) : null}
 
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">

@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { normalizarTexto } from '@/lib/texto'
 
 type PaletteItem = {
   slug: string
@@ -66,7 +67,7 @@ const CommandPalette = ({ itens }: CommandPaletteProps) => {
   const { termo, argumento } = separarBusca(busca)
 
   const filtrados = useMemo(() => {
-    const alvo = termo.toLowerCase()
+    const alvo = normalizarTexto(termo)
 
     if (!alvo) {
       return itens
@@ -74,7 +75,7 @@ const CommandPalette = ({ itens }: CommandPaletteProps) => {
 
     return itens.filter((item) =>
       [item.nome, item.slug, ...item.tags].some((campo) =>
-        campo.toLowerCase().includes(alvo),
+        normalizarTexto(campo).includes(alvo),
       ),
     )
   }, [itens, termo])

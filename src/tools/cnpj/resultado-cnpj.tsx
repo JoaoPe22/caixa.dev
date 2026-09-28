@@ -4,17 +4,13 @@ import type { ReactNode } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { ValorCopiavel } from '@/components/valor-copiavel'
+import { formatarCep } from '@/shared/brasil/cep'
 import { formatarCnpj } from '@/shared/brasil/cnpj'
+import { formatarData, formatarMoeda } from '@/shared/brasil/formatacao'
+import { formatarTelefone } from '@/shared/brasil/telefone'
 
-import type { Empresa, Socio, Telefone } from './empresa'
-import {
-  descreverOpcao,
-  formatarCep,
-  formatarCnae,
-  formatarData,
-  formatarMoeda,
-  formatarTelefone,
-} from './formatacao'
+import { descreverOpcao, formatarCnae } from './formatacao'
+import type { Empresa, Socio, Telefone } from './tipos'
 
 type Campo = {
   rotulo: string

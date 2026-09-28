@@ -43,4 +43,4 @@ const formatarCnpj = (valor: string) => {
   return `${blocos}${filial}${digitos}`
 }
 
-export { formatarCnpj, limparCnpj, normalizarCnpj, TAMANHO_CNPJ }
+export { formatarCnpj, normalizarCnpj }

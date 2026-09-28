@@ -11,6 +11,7 @@ import {
   REVALIDATE_IBGE,
   TIMEOUT_IBGE_MS,
 } from './constantes'
+import type { BuscaReversa, CepResultado, Endereco } from './tipos'
 
 const viaCepSucessoSchema = z.object({
   cep: z.string(),
@@ -45,30 +46,6 @@ const ibgeMunicipioSchema = z.object({
 })
 
 type ViaCepSucesso = z.infer<typeof viaCepSucessoSchema>
-
-type Endereco = {
-  cep: string
-  logradouro: string
-  complemento: string
-  unidade: string
-  bairro: string
-  cidade: string
-  uf: string
-  estado: string
-  regiao: string
-  ddd: string
-  ibge: string
-}
-
-type CepResultado = Endereco & {
-  microrregiao: string | null
-  mesorregiao: string | null
-}
-
-type BuscaReversa = {
-  enderecos: Endereco[]
-  truncado: boolean
-}
 
 const paraEndereco = (bruto: ViaCepSucesso): Endereco => ({
   cep: bruto.cep,
@@ -164,4 +141,3 @@ const buscarEnderecos = async (
 }
 
 export { buscarEnderecos, consultarCep }
-export type { BuscaReversa, CepResultado, Endereco }

@@ -7,6 +7,7 @@ import type { ChangeEvent } from 'react'
 import { useMemo, useRef, useState } from 'react'
 import { encode } from 'uqr'
 
+import { Alerta } from '@/components/alerta'
 import { Campo } from '@/components/campo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -320,11 +321,7 @@ const PainelDesign = ({ design, atualizar }: PainelDesignProps) => {
           </Campo>
         ) : null}
 
-        {erroLogo ? (
-          <p role="status" className="text-sm text-destructive">
-            {erroLogo}
-          </p>
-        ) : null}
+        {erroLogo ? <Alerta>{erroLogo}</Alerta> : null}
 
         <p className="text-xs text-muted-foreground">
           A imagem não sai do seu navegador. Com logo, o QR usa a correção de

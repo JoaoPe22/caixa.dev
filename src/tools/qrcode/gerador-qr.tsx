@@ -7,9 +7,11 @@ import type { ReactNode } from 'react'
 import { useDeferredValue, useMemo, useState } from 'react'
 import { encode } from 'uqr'
 
+import { Alerta } from '@/components/alerta'
 import { Campo } from '@/components/campo'
 import { Button } from '@/components/ui/button'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { useCopiar } from '@/hooks/use-copiar'
 
 import { avisosDeLeitura } from './avisos-leitura'
 import { type Atualizar, CamposConteudo } from './campos-conteudo'
@@ -73,7 +75,7 @@ const GeradorQr = () => {
   const [tamanhoPng, setTamanhoPng] = useState(1024)
   const [gerandoPng, setGerandoPng] = useState(false)
   const [erroDownload, setErroDownload] = useState<string | null>(null)
-  const [copiado, setCopiado] = useState(false)
+  const { copiado, copiar } = useCopiar()
 
   const atualizarDados: Atualizar = (alvo, parcial) =>
     setDados((anterior) => ({
@@ -151,13 +153,9 @@ const GeradorQr = () => {
   }
 
   const copiarPix = async () => {
-    if (!resultado.ok) {
-      return
+    if (resultado.ok) {
+      await copiar(resultado.payload)
     }
-
-    await navigator.clipboard.writeText(resultado.payload)
-    setCopiado(true)
-    setTimeout(() => setCopiado(false), 1_500)
   }
 
   return (
@@ -192,14 +190,7 @@ const GeradorQr = () => {
             atualizar={atualizarDados}
           />
 
-          {erro ? (
-            <p
-              role="status"
-              className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm"
-            >
-              {erro}
-            </p>
-          ) : null}
+          {erro ? <Alerta>{erro}</Alerta> : null}
         </Etapa>
 
         <Etapa numero={2} titulo="Design">
@@ -228,13 +219,9 @@ const GeradorQr = () => {
           </div>
 
           {avisos.map((aviso) => (
-            <p
-              key={aviso}
-              role="status"
-              className="text-sm text-amber-600 dark:text-amber-500"
-            >
+            <Alerta key={aviso} variante="aviso">
               {aviso}
-            </p>
+            </Alerta>
           ))}
 
           {tipo === 'pix' && resultado.ok ? (
@@ -293,11 +280,7 @@ const GeradorQr = () => {
             </Button>
           </div>
 
-          {erroDownload ? (
-            <p role="status" className="text-sm text-destructive">
-              {erroDownload}
-            </p>
-          ) : null}
+          {erroDownload ? <Alerta>{erroDownload}</Alerta> : null}
 
           {!pronto ? (
             <p className="text-xs text-muted-foreground">

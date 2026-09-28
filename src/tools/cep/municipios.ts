@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { buscarJson } from '@/tools/_core/api-helpers'
 
 import { REVALIDATE_IBGE } from './constantes'
+import type { Municipio } from './tipos'
 
 const municipiosSchema = z.array(
   z.object({
@@ -10,11 +11,6 @@ const municipiosSchema = z.array(
     nome: z.string(),
   }),
 )
-
-type Municipio = {
-  nome: string
-  ibge: string
-}
 
 const listarMunicipios = async (uf: string): Promise<Municipio[]> => {
   const lista = await buscarJson(
@@ -32,4 +28,3 @@ const listarMunicipios = async (uf: string): Promise<Municipio[]> => {
 }
 
 export { listarMunicipios }
-export type { Municipio }

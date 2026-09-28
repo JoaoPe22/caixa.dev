@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 
-import type { Envelope } from '@/tools/_core/api-helpers'
+import { consultarApi } from '@/tools/_core/cliente-api'
 
-import type { Municipio } from './municipios'
+import type { Municipio } from './tipos'
 
 type MunicipiosDaUf = {
   municipios: Municipio[]
@@ -23,33 +23,21 @@ const useMunicipios = (uf: string) => {
     const controle = new AbortController()
 
     const carregar = async () => {
-      try {
-        const resposta = await fetch(`/api/cep/municipios?uf=${uf}`, {
-          signal: controle.signal,
-        })
-        const envelope = (await resposta.json()) as Envelope<{
-          municipios: Municipio[]
-        }>
+      const envelope = await consultarApi<{ municipios: Municipio[] }>(
+        `/api/cep/municipios?uf=${uf}`,
+        { signal: controle.signal },
+      )
 
-        setPorUf((anterior) => ({
-          ...anterior,
-          [uf]: envelope.ok
-            ? { municipios: envelope.data.municipios, erro: null }
-            : { municipios: [], erro: envelope.erro.mensagem },
-        }))
-      } catch {
-        if (controle.signal.aborted) {
-          return
-        }
-
-        setPorUf((anterior) => ({
-          ...anterior,
-          [uf]: {
-            municipios: [],
-            erro: 'Não foi possível carregar os municípios.',
-          },
-        }))
+      if (controle.signal.aborted) {
+        return
       }
+
+      setPorUf((anterior) => ({
+        ...anterior,
+        [uf]: envelope.ok
+          ? { municipios: envelope.data.municipios, erro: null }
+          : { municipios: [], erro: envelope.erro.mensagem },
+      }))
     }
 
     void carregar()

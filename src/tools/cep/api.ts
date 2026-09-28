@@ -1,3 +1,4 @@
+import { normalizarCep } from '@/shared/brasil/cep'
 import {
   comTratamentoDeErro,
   erroEntradaInvalida,
@@ -5,9 +6,13 @@ import {
   respostaOk,
 } from '@/tools/_core/api-helpers'
 
-import { MINIMO_TERMO, REVALIDATE_CEP } from './constantes'
+import {
+  MENSAGEM_CEP_NAO_ENCONTRADO,
+  mensagemEnderecoNaoEncontrado,
+  MINIMO_TERMO,
+  REVALIDATE_CEP,
+} from './constantes'
 import { buscarEnderecos, consultarCep } from './consultar-cep'
-import { normalizarCep } from './normalizar-cep'
 import { validarBuscaReversa } from './validar-busca'
 
 const getCep = async (request: Request) =>
@@ -27,9 +32,7 @@ const getCep = async (request: Request) =>
       const busca = await buscarEnderecos(uf.toUpperCase(), cidade, rua)
 
       if (busca.enderecos.length === 0) {
-        return erroNaoEncontrado(
-          `Nenhum endereço encontrado para "${rua}" em ${cidade}.`,
-        )
+        return erroNaoEncontrado(mensagemEnderecoNaoEncontrado(rua, cidade))
       }
 
       return respostaOk(busca, REVALIDATE_CEP)
@@ -46,7 +49,7 @@ const getCep = async (request: Request) =>
     const resultado = await consultarCep(cep)
 
     if (!resultado) {
-      return erroNaoEncontrado('CEP não encontrado.')
+      return erroNaoEncontrado(MENSAGEM_CEP_NAO_ENCONTRADO)
     }
 
     return respostaOk(resultado, REVALIDATE_CEP)

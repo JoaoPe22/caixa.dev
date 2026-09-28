@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react'
 
 import { normalizarTexto } from '@/lib/texto'
-import type { Envelope } from '@/tools/_core/api-helpers'
+import { consultarApi } from '@/tools/_core/cliente-api'
 
 import { ATRASO_SUGESTOES_MS, MINIMO_TERMO } from './constantes'
-import type { BuscaReversa, Endereco } from './consultar-cep'
+import type { BuscaReversa, Endereco } from './tipos'
 
 type ResultadoEmCache = {
   termo: string
   busca: BuscaReversa | null
   erro: string | null
+}
+
+type Falha = {
+  chave: string
+  mensagem: string
 }
 
 type RuaSugerida = {
@@ -68,6 +73,7 @@ const useSugestoesDeRua = (
   habilitado: boolean,
 ) => {
   const [cache, setCache] = useState<Record<string, ResultadoEmCache>>({})
+  const [falha, setFalha] = useState<Falha | null>(null)
 
   const termoNormalizado = normalizarTexto(termo)
   const escopo = `${uf}|${normalizarTexto(cidade)}|`
@@ -87,6 +93,8 @@ const useSugestoesDeRua = (
         )?.[1]
       : undefined
 
+  const falhaAtual = ativo && falha?.chave === chave ? falha.mensagem : null
+
   const resultado: ResultadoEmCache | undefined =
     direto ??
     (baseCompleta?.busca
@@ -95,6 +103,9 @@ const useSugestoesDeRua = (
           busca: refinarLocalmente(baseCompleta.busca, termoNormalizado),
           erro: null,
         }
+      : undefined) ??
+    (falhaAtual
+      ? { termo: termoNormalizado, busca: null, erro: falhaAtual }
       : undefined)
 
   const precisaBuscar = ativo && !resultado
@@ -107,33 +118,29 @@ const useSugestoesDeRua = (
     const controle = new AbortController()
 
     const temporizador = setTimeout(async () => {
-      const guardar = (entrada: Omit<ResultadoEmCache, 'termo'>) =>
+      const guardar = (busca: BuscaReversa) =>
         setCache((anterior) => ({
           ...anterior,
-          [chave]: { termo: termoNormalizado, ...entrada },
+          [chave]: { termo: termoNormalizado, busca, erro: null },
         }))
 
-      try {
-        const query = new URLSearchParams({ uf, cidade, rua: termo.trim() })
-        const resposta = await fetch(`/api/cep?${query}`, {
-          signal: controle.signal,
-        })
-        const envelope = (await resposta.json()) as Envelope<BuscaReversa>
+      setFalha(null)
 
-        if (envelope.ok) {
-          guardar({ busca: envelope.data, erro: null })
-        } else if (envelope.erro.codigo === 'nao_encontrado') {
-          guardar({ busca: { enderecos: [], truncado: false }, erro: null })
-        } else {
-          guardar({ busca: null, erro: envelope.erro.mensagem })
-        }
-      } catch {
-        if (!controle.signal.aborted) {
-          guardar({
-            busca: null,
-            erro: 'Não foi possível buscar as ruas agora.',
-          })
-        }
+      const query = new URLSearchParams({ uf, cidade, rua: termo.trim() })
+      const envelope = await consultarApi<BuscaReversa>(`/api/cep?${query}`, {
+        signal: controle.signal,
+      })
+
+      if (controle.signal.aborted) {
+        return
+      }
+
+      if (envelope.ok) {
+        guardar(envelope.data)
+      } else if (envelope.erro.codigo === 'nao_encontrado') {
+        guardar({ enderecos: [], truncado: false })
+      } else {
+        setFalha({ chave, mensagem: envelope.erro.mensagem })
       }
     }, ATRASO_SUGESTOES_MS)
 

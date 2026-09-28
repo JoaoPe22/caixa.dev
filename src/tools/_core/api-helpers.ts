@@ -1,6 +1,7 @@
 import type { ZodType } from 'zod'
 
-import { garantirLimite, LimiteExcedidoError } from './limite-de-taxa'
+import { ErroUpstream, LimiteExcedidoError } from './erros'
+import { garantirLimite } from './limite-de-taxa'
 import { type ServicoExterno, SERVICOS_EXTERNOS } from './servicos-externos'
 
 type ErroApi = {
@@ -19,16 +20,6 @@ type BuscarOpts<T> = {
 
 const TIMEOUT_PADRAO_MS = 5_000
 const NAO_INDEXAR = { 'X-Robots-Tag': 'noindex, nofollow' }
-
-class ErroUpstream extends Error {
-  readonly status: number
-
-  constructor(status: number) {
-    super(`upstream respondeu ${status}`)
-    this.name = 'ErroUpstream'
-    this.status = status
-  }
-}
 
 const respostaOk = <T>(data: T, revalidate: number) =>
   Response.json({ ok: true, data } satisfies Envelope<T>, {
@@ -113,7 +104,6 @@ export {
   comTratamentoDeErro,
   erroEntradaInvalida,
   erroNaoEncontrado,
-  ErroUpstream,
   respostaOk,
 }
 export type { Envelope, ErroApi }

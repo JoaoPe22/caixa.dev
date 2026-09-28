@@ -10,7 +10,6 @@ const cepManifest: ToolManifest = {
   categoria: 'brasil',
   tags: [
     'cep',
-    'endereco',
     'endereço',
     'correios',
     'viacep',

@@ -1,9 +1,9 @@
 'use client'
 
 import { CheckIcon, CopyIcon } from 'lucide-react'
-import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { useCopiar } from '@/hooks/use-copiar'
 
 type ValorCopiavelProps = {
   rotulo: string
@@ -11,13 +11,7 @@ type ValorCopiavelProps = {
 }
 
 const ValorCopiavel = ({ rotulo, valor }: ValorCopiavelProps) => {
-  const [copiado, setCopiado] = useState(false)
-
-  const copiar = async () => {
-    await navigator.clipboard.writeText(valor)
-    setCopiado(true)
-    setTimeout(() => setCopiado(false), 1_500)
-  }
+  const { copiado, copiar } = useCopiar()
 
   return (
     <div className="flex items-start justify-between gap-3 border-b py-2.5 last:border-b-0">
@@ -30,7 +24,7 @@ const ValorCopiavel = ({ rotulo, valor }: ValorCopiavelProps) => {
         variant="ghost"
         size="icon"
         className="size-8 shrink-0"
-        onClick={copiar}
+        onClick={() => copiar(valor)}
         aria-label={`Copiar ${rotulo}`}
       >
         {copiado ? (

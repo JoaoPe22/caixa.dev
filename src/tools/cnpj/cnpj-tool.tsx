@@ -1,5 +1,5 @@
 import { formatarCnpj, normalizarCnpj } from '@/shared/brasil/cnpj'
-import { LimiteExcedidoError } from '@/tools/_core/limite-de-taxa'
+import { mensagemDeFalha } from '@/tools/_core/mensagens'
 import type { ToolProps } from '@/tools/_core/types'
 
 import { CnpjForm } from './cnpj-form'
@@ -8,12 +8,7 @@ import {
   MENSAGEM_CNPJ_NAO_ENCONTRADO,
 } from './constantes'
 import { consultarCnpj } from './consultar-cnpj'
-import type { Empresa } from './empresa'
-
-const mensagemDeFalha = (falha: unknown) =>
-  falha instanceof LimiteExcedidoError
-    ? falha.message
-    : 'Não foi possível consultar agora. Tente de novo.'
+import type { Empresa } from './tipos'
 
 const CnpjTool = async ({ args }: ToolProps) => {
   const bruto = args.join('')

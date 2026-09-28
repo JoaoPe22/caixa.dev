@@ -59,7 +59,11 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    files: ['src/components/**/*.{ts,tsx}', 'src/lib/**/*.{ts,tsx}'],
+    files: [
+      'src/components/**/*.{ts,tsx}',
+      'src/hooks/**/*.{ts,tsx}',
+      'src/lib/**/*.{ts,tsx}',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -73,7 +77,7 @@ const eslintConfig = defineConfig([
                 '!@/tools/_core/**',
               ],
               message:
-                'components/ e lib/ nao conhecem ferramentas: a dependencia e sempre no sentido oposto. Receba os dados por props a partir de src/app/.',
+                'components/, hooks/ e lib/ nao conhecem ferramentas: a dependencia e sempre no sentido oposto. Receba os dados por props a partir de src/app/.',
             },
           ],
         },

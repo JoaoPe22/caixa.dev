@@ -4,14 +4,15 @@ import { EraserIcon, SearchIcon } from 'lucide-react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { useRef, useState } from 'react'
 
+import { Alerta } from '@/components/alerta'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatarCnpj, normalizarCnpj } from '@/shared/brasil/cnpj'
-import type { Envelope } from '@/tools/_core/api-helpers'
+import { consultarApi } from '@/tools/_core/cliente-api'
 
 import { MENSAGEM_CNPJ_INVALIDO } from './constantes'
-import type { Empresa } from './empresa'
 import { ResultadoCnpj } from './resultado-cnpj'
+import type { Empresa } from './tipos'
 
 type EstadoInicial = {
   cnpj: string
@@ -58,22 +59,18 @@ const CnpjForm = ({ inicial }: CnpjFormProps) => {
     setConsultando(true)
     setErro(null)
 
-    try {
-      const resposta = await fetch(`/api/cnpj?cnpj=${cnpjNormalizado}`)
-      const envelope = (await resposta.json()) as Envelope<Empresa>
+    const envelope = await consultarApi<Empresa>(
+      `/api/cnpj?cnpj=${cnpjNormalizado}`,
+    )
 
-      if (envelope.ok) {
-        setEmpresa(envelope.data)
-        window.history.replaceState(null, '', `/cnpj/${cnpjNormalizado}`)
-      } else {
-        setEmpresa(null)
-        setErro(envelope.erro.mensagem)
-      }
-    } catch {
+    setConsultando(false)
+
+    if (envelope.ok) {
+      setEmpresa(envelope.data)
+      window.history.replaceState(null, '', `/cnpj/${cnpjNormalizado}`)
+    } else {
       setEmpresa(null)
-      setErro('Não foi possível consultar agora. Tente de novo.')
-    } finally {
-      setConsultando(false)
+      setErro(envelope.erro.mensagem)
     }
   }
 
@@ -121,14 +118,7 @@ const CnpjForm = ({ inicial }: CnpjFormProps) => {
         </p>
       </section>
 
-      {erro ? (
-        <p
-          role="status"
-          className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm"
-        >
-          {erro}
-        </p>
-      ) : null}
+      {erro ? <Alerta>{erro}</Alerta> : null}
 
       {empresa ? <ResultadoCnpj empresa={empresa} /> : null}
     </div>

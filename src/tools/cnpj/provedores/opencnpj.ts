@@ -1,10 +1,12 @@
 import { z } from 'zod'
 
-import { buscarJson, ErroUpstream } from '@/tools/_core/api-helpers'
+import { interpretarNumero } from '@/shared/brasil/numero'
+import { buscarJson } from '@/tools/_core/api-helpers'
+import { ErroUpstream } from '@/tools/_core/erros'
 
 import { REVALIDATE_CNPJ } from '../constantes'
-import type { Atividade, Empresa, OpcaoTributaria } from '../empresa'
 import { mascararCpfNoTexto } from '../mascarar-cpf'
+import type { Atividade, Empresa, OpcaoTributaria } from '../tipos'
 
 const texto = z
   .string()
@@ -89,16 +91,6 @@ const paraOpcao = (
   dataExclusao,
 })
 
-const paraCapital = (bruto: string) => {
-  if (!bruto) {
-    return null
-  }
-
-  const valor = Number(bruto.replace(/\./g, '').replace(',', '.'))
-
-  return Number.isFinite(valor) ? valor : null
-}
-
 const paraAtividade = ({ codigo, descricao }: Atividade): Atividade => ({
   codigo,
   descricao,
@@ -134,7 +126,7 @@ const paraEmpresa = (bruto: OpenCnpj): Empresa => {
     dataAbertura: bruto.data_inicio_atividade,
     naturezaJuridica: bruto.natureza_juridica,
     porte: bruto.porte_empresa,
-    capitalSocial: paraCapital(bruto.capital_social),
+    capitalSocial: interpretarNumero(bruto.capital_social),
     atividadePrincipal: atividades.principal,
     atividadesSecundarias: atividades.secundarias,
     endereco: {

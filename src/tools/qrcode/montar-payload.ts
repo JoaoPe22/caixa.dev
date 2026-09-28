@@ -1,3 +1,4 @@
+import { interpretarNumero } from '@/shared/brasil/numero'
 import { gerarPixCopiaECola } from '@/shared/brasil/pix'
 import { normalizarTelefone } from '@/shared/brasil/telefone'
 
@@ -65,18 +66,13 @@ const formatarDataIcs = (data: Date) => {
 }
 
 const interpretarValor = (texto: string): number | null | undefined => {
-  const limpo = texto.trim()
-
-  if (!limpo) {
+  if (!texto.trim()) {
     return null
   }
 
-  const normalizado = limpo.includes(',')
-    ? limpo.replace(/\./g, '').replace(',', '.')
-    : limpo
-  const numero = Number(normalizado)
+  const numero = interpretarNumero(texto)
 
-  return Number.isFinite(numero) ? Math.round(numero * 100) / 100 : undefined
+  return numero === null ? undefined : Math.round(numero * 100) / 100
 }
 
 const montadores: Montadores = {

@@ -17,4 +17,16 @@ const normalizarTelefone = (bruto: string): string | null => {
   return null
 }
 
-export { normalizarTelefone }
+const formatarTelefone = (numero: string) => {
+  if (numero.length === 10) {
+    return `(${numero.slice(0, 2)}) ${numero.slice(2, 6)}-${numero.slice(6)}`
+  }
+
+  if (numero.length === 11) {
+    return `(${numero.slice(0, 2)}) ${numero.slice(2, 7)}-${numero.slice(7)}`
+  }
+
+  return numero
+}
+
+export { formatarTelefone, normalizarTelefone }

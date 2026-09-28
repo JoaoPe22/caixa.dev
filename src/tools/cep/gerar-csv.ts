@@ -1,4 +1,4 @@
-import type { Endereco } from './consultar-cep'
+import type { Endereco } from './tipos'
 
 const BOM_UTF8 = String.fromCharCode(0xfeff)
 
