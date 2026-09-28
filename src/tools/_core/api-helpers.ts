@@ -18,11 +18,13 @@ type BuscarOpts<T> = {
 }
 
 const TIMEOUT_PADRAO_MS = 5_000
+const NAO_INDEXAR = { 'X-Robots-Tag': 'noindex, nofollow' }
 
 const respostaOk = <T>(data: T, revalidate: number) =>
   Response.json({ ok: true, data } satisfies Envelope<T>, {
     headers: {
       'Cache-Control': `public, s-maxage=${revalidate}, stale-while-revalidate=${revalidate * 2}`,
+      ...NAO_INDEXAR,
     },
   })
 
@@ -33,7 +35,11 @@ const respostaErro = (
 ) =>
   Response.json({ ok: false, erro } satisfies Envelope<never>, {
     status,
-    headers: { 'Cache-Control': 'no-store', ...cabecalhosExtras },
+    headers: {
+      'Cache-Control': 'no-store',
+      ...NAO_INDEXAR,
+      ...cabecalhosExtras,
+    },
   })
 
 const erroEntradaInvalida = (mensagem: string) =>

@@ -8,17 +8,25 @@ type Props = PageProps<'/[slug]/[[...args]]'>
 const generateStaticParams = async () =>
   manifests().map((manifest) => ({ slug: manifest.slug, args: [] }))
 
-const generateMetadata = async ({ params }: Props): Promise<Metadata> => {
-  const { slug } = await params
+const generateMetadata = async ({
+  params,
+  searchParams,
+}: Props): Promise<Metadata> => {
+  const [{ slug, args }, query] = await Promise.all([params, searchParams])
   const entrada = getToolBySlug(slug)
 
   if (!entrada) {
     return {}
   }
 
+  const exibeDadosDeApi =
+    entrada.manifest.runtime === 'bff' &&
+    ((args?.length ?? 0) > 0 || Object.keys(query).length > 0)
+
   return {
     title: entrada.manifest.nome,
     description: entrada.manifest.descricao,
+    ...(exibeDadosDeApi ? { robots: { index: false, follow: false } } : {}),
   }
 }
 
