@@ -1,5 +1,8 @@
 import type { ZodType } from 'zod'
 
+import { garantirLimite, LimiteExcedidoError } from './limite-de-taxa'
+import { type ServicoExterno, SERVICOS_EXTERNOS } from './servicos-externos'
+
 type ErroApi = {
   codigo: string
   mensagem: string
@@ -8,6 +11,7 @@ type ErroApi = {
 type Envelope<T> = { ok: true; data: T } | { ok: false; erro: ErroApi }
 
 type BuscarOpts<T> = {
+  servico: ServicoExterno
   revalidate: number
   schema: ZodType<T>
   timeoutMs?: number
@@ -22,10 +26,14 @@ const respostaOk = <T>(data: T, revalidate: number) =>
     },
   })
 
-const respostaErro = (erro: ErroApi, status: number) =>
+const respostaErro = (
+  erro: ErroApi,
+  status: number,
+  cabecalhosExtras: Record<string, string> = {},
+) =>
   Response.json({ ok: false, erro } satisfies Envelope<never>, {
     status,
-    headers: { 'Cache-Control': 'no-store' },
+    headers: { 'Cache-Control': 'no-store', ...cabecalhosExtras },
   })
 
 const erroEntradaInvalida = (mensagem: string) =>
@@ -35,6 +43,8 @@ const erroNaoEncontrado = (mensagem: string) =>
   respostaErro({ codigo: 'nao_encontrado', mensagem }, 404)
 
 const buscarJson = async <T>(url: string, opts: BuscarOpts<T>): Promise<T> => {
+  await garantirLimite(SERVICOS_EXTERNOS[opts.servico], 'global')
+
   const resposta = await fetch(url, {
     cache: 'force-cache',
     next: { revalidate: opts.revalidate },
@@ -54,6 +64,14 @@ const comTratamentoDeErro = async (
   try {
     return await executar()
   } catch (erro) {
+    if (erro instanceof LimiteExcedidoError) {
+      return respostaErro(
+        { codigo: 'limite_excedido', mensagem: erro.message },
+        429,
+        { 'Retry-After': String(erro.segundosParaLiberar) },
+      )
+    }
+
     if (erro instanceof DOMException && erro.name === 'TimeoutError') {
       return respostaErro(
         {

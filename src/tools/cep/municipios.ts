@@ -20,6 +20,7 @@ const listarMunicipios = async (uf: string): Promise<Municipio[]> => {
   const lista = await buscarJson(
     `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`,
     {
+      servico: 'ibge',
       revalidate: REVALIDATE_IBGE,
       schema: municipiosSchema,
     },

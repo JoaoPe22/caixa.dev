@@ -1,3 +1,4 @@
+import { LimiteExcedidoError } from '@/tools/_core/limite-de-taxa'
 import type { ToolProps, ToolSearchParams } from '@/tools/_core/types'
 
 import { CepForm } from './cep-form'
@@ -11,6 +12,11 @@ const texto = (params: ToolSearchParams, chave: string) => {
 
   return (Array.isArray(valor) ? (valor[0] ?? '') : (valor ?? '')).trim()
 }
+
+const mensagemDeFalha = (falha: unknown) =>
+  falha instanceof LimiteExcedidoError
+    ? falha.message
+    : 'Não foi possível consultar agora. Tente de novo.'
 
 const CepTool = async ({ args, searchParams }: ToolProps) => {
   const uf = texto(searchParams, 'uf').toUpperCase()
@@ -30,8 +36,8 @@ const CepTool = async ({ args, searchParams }: ToolProps) => {
         } else {
           busca = encontrado
         }
-      } catch {
-        erro = 'Não foi possível consultar agora. Tente de novo.'
+      } catch (falha) {
+        erro = mensagemDeFalha(falha)
       }
     }
 
@@ -70,8 +76,8 @@ const CepTool = async ({ args, searchParams }: ToolProps) => {
     if (!resultado) {
       erro = 'CEP não encontrado.'
     }
-  } catch {
-    erro = 'Não foi possível consultar agora. Tente de novo.'
+  } catch (falha) {
+    erro = mensagemDeFalha(falha)
   }
 
   return (

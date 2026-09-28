@@ -1,9 +1,12 @@
 import { z } from 'zod'
 
 import { buscarJson } from '@/tools/_core/api-helpers'
+import { garantirLimite } from '@/tools/_core/limite-de-taxa'
 
 import {
   LIMITE_VIACEP,
+  REGRA_CEP_BUSCA_RUA,
+  REGRA_CEP_CONSULTA,
   REVALIDATE_CEP,
   REVALIDATE_IBGE,
   TIMEOUT_IBGE_MS,
@@ -90,6 +93,7 @@ const buscarRegioesIbge = async (codigoIbge: string) => {
     const municipio = await buscarJson(
       `https://servicodados.ibge.gov.br/api/v1/localidades/municipios/${codigoIbge}`,
       {
+        servico: 'ibge',
         revalidate: REVALIDATE_IBGE,
         schema: ibgeMunicipioSchema,
         timeoutMs: TIMEOUT_IBGE_MS,
@@ -106,7 +110,10 @@ const buscarRegioesIbge = async (codigoIbge: string) => {
 }
 
 const consultarCep = async (cep: string): Promise<CepResultado | null> => {
+  await garantirLimite(REGRA_CEP_CONSULTA)
+
   const resposta = await buscarJson(`https://viacep.com.br/ws/${cep}/json/`, {
+    servico: 'viacep',
     revalidate: REVALIDATE_CEP,
     schema: viaCepSchema,
   })
@@ -131,12 +138,15 @@ const buscarEnderecos = async (
   cidade: string,
   rua: string,
 ): Promise<BuscaReversa> => {
+  await garantirLimite(REGRA_CEP_BUSCA_RUA)
+
   for (const variante of variantesDaCidade(cidade)) {
     const caminho = [uf, variante, rua].map(encodeURIComponent).join('/')
 
     const lista = await buscarJson(
       `https://viacep.com.br/ws/${caminho}/json/`,
       {
+        servico: 'viacep',
         revalidate: REVALIDATE_CEP,
         schema: viaCepListaSchema,
       },
