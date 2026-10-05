@@ -1,21 +1,29 @@
+import { caracteresAleatorios } from '@/lib/aleatorio'
+
+import { digitoModulo11 } from './digito-verificador'
+
+type OpcoesGerarCnpj = {
+  alfanumerico?: boolean
+  matriz?: boolean
+}
+
 const TAMANHO_CNPJ = 14
 const PESOS = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+const NUMEROS = '0123456789'
+const ALFANUMERICOS = `${NUMEROS}ABCDEFGHIJKLMNOPQRSTUVWXYZ`
+const ORDEM_MATRIZ = '0001'
 
 const limparCnpj = (bruto: string) =>
   bruto.toUpperCase().replace(/[^0-9A-Z]/g, '')
 
-const valorDoCaractere = (caractere: string) => caractere.charCodeAt(0) - 48
+const digitoVerificador = (base: string) =>
+  digitoModulo11(base, PESOS.slice(PESOS.length - base.length))
 
-const digitoVerificador = (base: string) => {
-  const pesos = PESOS.slice(PESOS.length - base.length)
-  const soma = [...base].reduce(
-    (total, caractere, indice) =>
-      total + valorDoCaractere(caractere) * (pesos[indice] ?? 0),
-    0,
-  )
-  const resto = soma % 11
+const comDigitosVerificadores = (base: string) => {
+  const primeiro = digitoVerificador(base)
+  const segundo = digitoVerificador(`${base}${primeiro}`)
 
-  return resto < 2 ? 0 : 11 - resto
+  return `${base}${primeiro}${segundo}`
 }
 
 const normalizarCnpj = (bruto: string): string | null => {
@@ -25,11 +33,7 @@ const normalizarCnpj = (bruto: string): string | null => {
     return null
   }
 
-  const base = cnpj.slice(0, 12)
-  const primeiro = digitoVerificador(base)
-  const segundo = digitoVerificador(`${base}${primeiro}`)
-
-  return cnpj.endsWith(`${primeiro}${segundo}`) ? cnpj : null
+  return comDigitosVerificadores(cnpj.slice(0, 12)) === cnpj ? cnpj : null
 }
 
 const formatarCnpj = (valor: string) => {
@@ -43,4 +47,24 @@ const formatarCnpj = (valor: string) => {
   return `${blocos}${filial}${digitos}`
 }
 
-export { formatarCnpj, normalizarCnpj }
+const gerarCnpj = ({
+  alfanumerico = false,
+  matriz = true,
+}: OpcoesGerarCnpj = {}): string => {
+  const alfabeto = alfanumerico ? ALFANUMERICOS : NUMEROS
+  const raiz = caracteresAleatorios(8, alfabeto)
+  const ordem = matriz ? ORDEM_MATRIZ : caracteresAleatorios(4, alfabeto)
+  const base = `${raiz}${ordem}`
+
+  const valida =
+    ordem !== '0000' &&
+    !/^(.)\1+$/.test(base) &&
+    (!alfanumerico || /[A-Z]/.test(base))
+
+  return valida
+    ? comDigitosVerificadores(base)
+    : gerarCnpj({ alfanumerico, matriz })
+}
+
+export { formatarCnpj, gerarCnpj, normalizarCnpj }
+export type { OpcoesGerarCnpj }

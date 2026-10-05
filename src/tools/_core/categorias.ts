@@ -1,4 +1,4 @@
-type ToolCategoria = 'brasil' | 'dados' | 'texto' | 'web' | 'tempo'
+type ToolCategoria = 'brasil' | 'dev' | 'dados' | 'texto' | 'web' | 'tempo'
 
 type CategoriaInfo = {
   nome: string
@@ -9,6 +9,10 @@ const categorias: Record<ToolCategoria, CategoriaInfo> = {
   brasil: {
     nome: 'Brasil',
     descricao: 'Consultas a dados públicos brasileiros',
+  },
+  dev: {
+    nome: 'Testes e desenvolvimento',
+    descricao: 'Documentos e cadastros fictícios para testar sistemas',
   },
   dados: {
     nome: 'Dados',
@@ -30,6 +34,7 @@ const categorias: Record<ToolCategoria, CategoriaInfo> = {
 
 const ordemCategorias: ToolCategoria[] = [
   'brasil',
+  'dev',
   'dados',
   'texto',
   'web',

@@ -1,3 +1,5 @@
+import { digitosAleatorios, inteiroAleatorio } from '@/lib/aleatorio'
+
 const normalizarTelefone = (bruto: string): string | null => {
   const texto = bruto.trim()
   const digitos = texto.replace(/\D/g, '')
@@ -29,4 +31,10 @@ const formatarTelefone = (numero: string) => {
   return numero
 }
 
-export { formatarTelefone, normalizarTelefone }
+const gerarCelular = (ddd: string) =>
+  `${ddd}9${inteiroAleatorio(6, 9)}${digitosAleatorios(7)}`
+
+const gerarTelefoneFixo = (ddd: string) =>
+  `${ddd}${inteiroAleatorio(2, 5)}${digitosAleatorios(7)}`
+
+export { formatarTelefone, gerarCelular, gerarTelefoneFixo, normalizarTelefone }
