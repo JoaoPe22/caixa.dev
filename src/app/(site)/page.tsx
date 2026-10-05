@@ -1,10 +1,10 @@
 import { ToolCard } from '@/components/tool-card'
+import { Kbd, KbdGroup } from '@/components/ui/kbd'
 import { categorias, ordemCategorias } from '@/tools/_core/categorias'
 import { manifests } from '@/tools/registry'
 
-const Home = () => {
+const HomePage = () => {
   const todas = manifests()
-
   return (
     <div className="flex flex-col gap-10">
       <section className="flex flex-col gap-2">
@@ -13,12 +13,10 @@ const Home = () => {
         </h1>
         <p className="text-muted-foreground">
           Sem login, sem anúncios, sem espera. Aperte{' '}
-          <kbd className="rounded border bg-muted px-1.5 py-0.5 font-mono text-xs">
-            Ctrl
-          </kbd>{' '}
-          <kbd className="rounded border bg-muted px-1.5 py-0.5 font-mono text-xs">
-            K
-          </kbd>{' '}
+          <KbdGroup>
+            <Kbd>Ctrl</Kbd>
+            <Kbd>K</Kbd>
+          </KbdGroup>{' '}
           para buscar.
         </p>
       </section>
@@ -65,4 +63,4 @@ const Home = () => {
   )
 }
 
-export default Home
+export default HomePage
