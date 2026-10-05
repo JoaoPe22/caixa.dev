@@ -1,40 +1,36 @@
 'use client'
 
-import { CheckIcon, CopyIcon } from 'lucide-react'
-
-import { Button } from '@/components/ui/button'
-import { useCopiar } from '@/hooks/use-copiar'
+import { BotaoCopiar } from '@/components/botao-copiar'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemTitle,
+} from '@/components/ui/item'
 
 type ValorCopiavelProps = {
   rotulo: string
   valor: string
 }
 
-const ValorCopiavel = ({ rotulo, valor }: ValorCopiavelProps) => {
-  const { copiado, copiar } = useCopiar()
+const ValorCopiavel = ({ rotulo, valor }: ValorCopiavelProps) => (
+  <Item role="listitem" className="items-start">
+    <ItemContent className="min-w-0 gap-0.5">
+      <ItemDescription className="text-xs">{rotulo}</ItemDescription>
+      <ItemTitle>{valor}</ItemTitle>
+    </ItemContent>
 
-  return (
-    <div className="flex items-start justify-between gap-3 border-b py-2.5 last:border-b-0">
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-xs text-muted-foreground">{rotulo}</span>
-        <span className="truncate font-medium">{valor}</span>
-      </div>
-
-      <Button
+    <ItemActions>
+      <BotaoCopiar
+        texto={valor}
         variant="ghost"
         size="icon"
         className="size-8 shrink-0"
-        onClick={() => copiar(valor)}
         aria-label={`Copiar ${rotulo}`}
-      >
-        {copiado ? (
-          <CheckIcon className="size-3.5" />
-        ) : (
-          <CopyIcon className="size-3.5" />
-        )}
-      </Button>
-    </div>
-  )
-}
+      />
+    </ItemActions>
+  </Item>
+)
 
 export { ValorCopiavel }

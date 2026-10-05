@@ -3,6 +3,19 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 
 import { Badge } from '@/components/ui/badge'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
+import {
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item'
 import { ValorCopiavel } from '@/components/valor-copiavel'
 import { formatarCep } from '@/shared/brasil/cep'
 import { formatarCnpj } from '@/shared/brasil/cnpj'
@@ -44,7 +57,7 @@ const SecaoDeCampos = ({ titulo, campos, rodape }: SecaoDeCamposProps) => {
 
   return (
     <Secao titulo={titulo}>
-      <div className="rounded-lg border px-4">
+      <ItemGroup variant="outline">
         {preenchidos.map((campo) => (
           <ValorCopiavel
             key={campo.rotulo}
@@ -52,7 +65,7 @@ const SecaoDeCampos = ({ titulo, campos, rodape }: SecaoDeCamposProps) => {
             valor={campo.valor}
           />
         ))}
-      </div>
+      </ItemGroup>
       {rodape}
     </Secao>
   )
@@ -160,26 +173,23 @@ const Atividades = ({ empresa }: { empresa: Empresa }) => {
 
   return (
     <Secao titulo="Atividades econômicas (CNAE)">
-      <ul className="rounded-lg border">
+      <ItemGroup variant="outline">
         {atividades.map((atividade) => (
-          <li
-            key={atividade.codigo}
-            className="flex gap-3 border-b px-4 py-2.5 last:border-b-0"
-          >
-            <span className="shrink-0 pt-0.5 font-mono text-xs">
+          <Item key={atividade.codigo} role="listitem" className="items-start">
+            <ItemMedia className="pt-0.5 font-mono text-xs">
               {formatarCnae(atividade.codigo)}
-            </span>
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <span className="text-sm">
+            </ItemMedia>
+            <ItemContent className="min-w-0 gap-0.5">
+              <ItemTitle className="line-clamp-none font-normal">
                 {atividade.descricao || 'Descrição não informada'}
-              </span>
+              </ItemTitle>
               {atividade.principal ? (
-                <span className="text-xs text-muted-foreground">Principal</span>
+                <ItemDescription className="text-xs">Principal</ItemDescription>
               ) : null}
-            </div>
-          </li>
+            </ItemContent>
+          </Item>
         ))}
-      </ul>
+      </ItemGroup>
     </Secao>
   )
 }
@@ -190,34 +200,38 @@ const Socios = ({ socios }: { socios: Socio[] }) => {
   }
 
   return (
-    <details className="group rounded-lg border">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+    <Collapsible className="group rounded-lg border">
+      <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-4 py-3 text-sm font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
         Sócios e administradores ({socios.length})
-        <ChevronDownIcon className="size-4 transition-transform group-open:rotate-180" />
-      </summary>
+        <ChevronDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" />
+      </CollapsibleTrigger>
 
-      <ul className="border-t">
-        {socios.map((socio, indice) => (
-          <li
-            key={`${socio.nome}-${indice}`}
-            className="flex flex-col gap-0.5 border-b px-4 py-2.5 last:border-b-0"
-          >
-            <span className="text-sm font-medium">{socio.nome}</span>
-            <span className="text-xs text-muted-foreground">
-              {detalhesDoSocio(socio)}
-            </span>
-            {socio.representante ? (
-              <span className="text-xs text-muted-foreground">
-                Representante: {socio.representante.nome}
-                {socio.representante.qualificacao
-                  ? ` (${socio.representante.qualificacao})`
-                  : ''}
-              </span>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-    </details>
+      <CollapsibleContent>
+        <ItemGroup
+          variant="outline"
+          className="rounded-none border-x-0 border-b-0"
+        >
+          {socios.map((socio, indice) => (
+            <Item key={`${socio.nome}-${indice}`} role="listitem">
+              <ItemContent className="min-w-0 gap-0.5">
+                <ItemTitle>{socio.nome}</ItemTitle>
+                <ItemDescription className="line-clamp-none text-xs">
+                  {detalhesDoSocio(socio)}
+                </ItemDescription>
+                {socio.representante ? (
+                  <ItemDescription className="line-clamp-none text-xs">
+                    Representante: {socio.representante.nome}
+                    {socio.representante.qualificacao
+                      ? ` (${socio.representante.qualificacao})`
+                      : ''}
+                  </ItemDescription>
+                ) : null}
+              </ItemContent>
+            </Item>
+          ))}
+        </ItemGroup>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }
 

@@ -8,19 +8,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Command,
+  CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { normalizarTexto } from '@/lib/texto'
 
 type PaletteItem = {
@@ -123,58 +117,53 @@ const CommandPalette = ({ itens }: CommandPaletteProps) => {
         <span className="hidden sm:inline">Buscar ferramenta</span>
       </Button>
 
-      <Dialog open={aberto} onOpenChange={setAberto}>
-        <DialogHeader className="sr-only">
-          <DialogTitle>Buscar ferramenta</DialogTitle>
-          <DialogDescription>
-            Digite o nome de uma ferramenta. Você pode já informar o valor, como
-            em &quot;cep 01310100&quot;.
-          </DialogDescription>
-        </DialogHeader>
+      <CommandDialog
+        open={aberto}
+        onOpenChange={setAberto}
+        title="Buscar ferramenta"
+        description='Digite o nome de uma ferramenta. Você pode já informar o valor, como em "cep 01310100".'
+      >
+        <Command
+          shouldFilter={false}
+          value={selecionadoValido}
+          onValueChange={setSelecionado}
+        >
+          <CommandInput
+            value={busca}
+            onValueChange={setBusca}
+            onKeyDownCapture={aoTeclarNoInput}
+            placeholder="Buscar ferramenta…  ex: cep 01310100"
+          />
 
-        <DialogContent className="overflow-hidden p-0" showCloseButton={false}>
-          <Command
-            shouldFilter={false}
-            value={selecionadoValido}
-            onValueChange={setSelecionado}
-          >
-            <CommandInput
-              value={busca}
-              onValueChange={setBusca}
-              onKeyDownCapture={aoTeclarNoInput}
-              placeholder="Buscar ferramenta…  ex: cep 01310100"
-            />
+          <CommandList>
+            <CommandEmpty>Nenhuma ferramenta encontrada.</CommandEmpty>
 
-            <CommandList>
-              <CommandEmpty>Nenhuma ferramenta encontrada.</CommandEmpty>
+            <CommandGroup heading="Ferramentas">
+              {filtrados.map((item) => (
+                <CommandItem
+                  key={item.slug}
+                  value={item.slug}
+                  onSelect={() => navegar(item)}
+                >
+                  {item.icone}
 
-              <CommandGroup heading="Ferramentas">
-                {filtrados.map((item) => (
-                  <CommandItem
-                    key={item.slug}
-                    value={item.slug}
-                    onSelect={() => navegar(item)}
-                  >
-                    {item.icone}
+                  <span className="font-medium">{item.nome}</span>
 
-                    <span className="font-medium">{item.nome}</span>
-
-                    {argumento && item.aceitaArgumento ? (
-                      <span className="ml-auto font-mono text-xs text-muted-foreground">
-                        {argumento}
-                      </span>
-                    ) : (
-                      <span className="ml-auto truncate text-xs text-muted-foreground">
-                        {item.descricao}
-                      </span>
-                    )}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </DialogContent>
-      </Dialog>
+                  {argumento && item.aceitaArgumento ? (
+                    <span className="ml-auto font-mono text-xs text-muted-foreground">
+                      {argumento}
+                    </span>
+                  ) : (
+                    <span className="ml-auto truncate text-xs text-muted-foreground">
+                      {item.descricao}
+                    </span>
+                  )}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </CommandDialog>
     </>
   )
 }

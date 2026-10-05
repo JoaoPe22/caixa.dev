@@ -1,7 +1,15 @@
 import { cn } from 'cn'
+import type { LucideIcon } from 'lucide-react'
+import {
+  CircleAlertIcon,
+  CircleCheckIcon,
+  TriangleAlertIcon,
+} from 'lucide-react'
 import type { ReactNode } from 'react'
 
-type VarianteAlerta = 'erro' | 'aviso'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+
+type VarianteAlerta = 'erro' | 'aviso' | 'sucesso'
 
 type AlertaProps = {
   variante?: VarianteAlerta
@@ -9,16 +17,35 @@ type AlertaProps = {
   children: ReactNode
 }
 
-const estilos: Record<VarianteAlerta, string> = {
-  erro: 'rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2',
-  aviso: 'text-amber-600 dark:text-amber-500',
+const estilos: Record<
+  VarianteAlerta,
+  { variant: 'default' | 'destructive'; icone: LucideIcon; classe?: string }
+> = {
+  erro: { variant: 'destructive', icone: CircleAlertIcon },
+  aviso: {
+    variant: 'default',
+    icone: TriangleAlertIcon,
+    classe:
+      'text-amber-600 *:data-[slot=alert-description]:text-amber-600/90 dark:text-amber-500 dark:*:data-[slot=alert-description]:text-amber-500/90',
+  },
+  sucesso: {
+    variant: 'default',
+    icone: CircleCheckIcon,
+    classe:
+      'text-emerald-600 *:data-[slot=alert-description]:text-emerald-600/90 dark:text-emerald-500 dark:*:data-[slot=alert-description]:text-emerald-500/90',
+  },
 }
 
-const Alerta = ({ variante = 'erro', className, children }: AlertaProps) => (
-  <p role="status" className={cn('text-sm', estilos[variante], className)}>
-    {children}
-  </p>
-)
+const Alerta = ({ variante = 'erro', className, children }: AlertaProps) => {
+  const { variant, icone: Icone, classe } = estilos[variante]
+
+  return (
+    <Alert role="status" variant={variant} className={cn(classe, className)}>
+      <Icone />
+      <AlertDescription>{children}</AlertDescription>
+    </Alert>
+  )
+}
 
 export { Alerta }
 export type { VarianteAlerta }

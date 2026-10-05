@@ -7,6 +7,7 @@ import { useRef, useState } from 'react'
 import { Alerta } from '@/components/alerta'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ItemGroup } from '@/components/ui/item'
 import { ValorCopiavel } from '@/components/valor-copiavel'
 import { formatarCep, normalizarCep } from '@/shared/brasil/cep'
 import { consultarApi } from '@/tools/_core/cliente-api'
@@ -226,14 +227,16 @@ const CepForm = ({ inicial }: CepFormProps) => {
       {erro ? <Alerta>{erro}</Alerta> : null}
 
       {resultado ? (
-        <div role="status" className="rounded-lg border px-4">
-          {camposDoResultado(resultado).map((campo) => (
-            <ValorCopiavel
-              key={campo.rotulo}
-              rotulo={campo.rotulo}
-              valor={campo.valor}
-            />
-          ))}
+        <div role="status">
+          <ItemGroup variant="outline">
+            {camposDoResultado(resultado).map((campo) => (
+              <ValorCopiavel
+                key={campo.rotulo}
+                rotulo={campo.rotulo}
+                valor={campo.valor}
+              />
+            ))}
+          </ItemGroup>
         </div>
       ) : null}
 
@@ -243,12 +246,12 @@ const CepForm = ({ inicial }: CepFormProps) => {
             Esta cidade não tem CEP por rua: todos os endereços usam o mesmo
             CEP.
           </p>
-          <div className="rounded-lg border px-4">
+          <ItemGroup variant="outline">
             <ValorCopiavel
               rotulo="CEP único da cidade"
               valor={cepUnicoDaBusca}
             />
-          </div>
+          </ItemGroup>
         </div>
       ) : null}
 
