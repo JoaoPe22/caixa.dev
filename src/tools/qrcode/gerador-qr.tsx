@@ -1,17 +1,19 @@
 'use client'
 
 import { cn } from 'cn'
-import { CheckIcon, CopyIcon, DownloadIcon } from 'lucide-react'
+import { DownloadIcon } from 'lucide-react'
 import Image from 'next/image'
 import type { ReactNode } from 'react'
 import { useDeferredValue, useMemo, useState } from 'react'
 import { encode } from 'uqr'
 
 import { Alerta } from '@/components/alerta'
+import { BotaoCopiar } from '@/components/botao-copiar'
+import { BotaoOpcao } from '@/components/botao-opcao'
 import { Campo } from '@/components/campo'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
-import { useCopiar } from '@/hooks/use-copiar'
 
 import { avisosDeLeitura } from './avisos-leitura'
 import { type Atualizar, CamposConteudo } from './campos-conteudo'
@@ -57,15 +59,17 @@ const Etapa = ({
   titulo: string
   children: ReactNode
 }) => (
-  <section className="flex flex-col gap-4 rounded-xl border p-4 sm:p-5">
-    <h2 className="flex items-center gap-2 font-semibold">
-      <span className="flex size-6 items-center justify-center rounded-md bg-primary text-xs text-primary-foreground">
-        {numero}
-      </span>
-      {titulo}
-    </h2>
-    {children}
-  </section>
+  <Card>
+    <CardHeader>
+      <h2 className="flex items-center gap-2 font-semibold">
+        <span className="flex size-6 items-center justify-center rounded-md bg-primary text-xs text-primary-foreground">
+          {numero}
+        </span>
+        {titulo}
+      </h2>
+    </CardHeader>
+    <CardContent className="flex flex-col gap-4">{children}</CardContent>
+  </Card>
 )
 
 const GeradorQr = () => {
@@ -75,7 +79,6 @@ const GeradorQr = () => {
   const [tamanhoPng, setTamanhoPng] = useState(1024)
   const [gerandoPng, setGerandoPng] = useState(false)
   const [erroDownload, setErroDownload] = useState<string | null>(null)
-  const { copiado, copiar } = useCopiar()
 
   const atualizarDados: Atualizar = (alvo, parcial) =>
     setDados((anterior) => ({
@@ -152,12 +155,6 @@ const GeradorQr = () => {
     }
   }
 
-  const copiarPix = async () => {
-    if (resultado.ok) {
-      await copiar(resultado.payload)
-    }
-  }
-
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="flex flex-col gap-6">
@@ -167,19 +164,19 @@ const GeradorQr = () => {
           className="grid grid-cols-2 gap-2 rounded-xl border p-3 sm:grid-cols-5"
         >
           {tiposDeConteudo.map(({ id, rotulo, icone: Icone }) => (
-            <button
+            <BotaoOpcao
               key={id}
-              type="button"
-              aria-pressed={tipo === id}
+              ativo={tipo === id}
               onClick={() => setTipo(id)}
               className={cn(
-                'flex items-center justify-center gap-2 rounded-lg border border-transparent px-2 py-2 text-sm transition-colors hover:bg-muted',
-                tipo === id && 'border-primary bg-primary/5 font-medium',
+                'h-auto min-w-0 gap-2 px-2 py-2',
+                tipo !== id &&
+                  'border-transparent bg-transparent dark:border-transparent dark:bg-transparent',
               )}
             >
               <Icone className="size-4 shrink-0" />
               <span className="truncate">{rotulo}</span>
-            </button>
+            </BotaoOpcao>
           ))}
         </div>
 
@@ -225,25 +222,22 @@ const GeradorQr = () => {
           ))}
 
           {tipo === 'pix' && resultado.ok ? (
-            <div className="flex flex-col gap-2 rounded-lg border p-3">
-              <span className="text-xs font-medium text-muted-foreground uppercase">
-                Pix copia e cola
-              </span>
-              <p className="font-mono text-xs break-all">{resultado.payload}</p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={copiarPix}
-              >
-                {copiado ? (
-                  <CheckIcon className="size-4" />
-                ) : (
-                  <CopyIcon className="size-4" />
-                )}
-                {copiado ? 'Copiado' : 'Copiar código'}
-              </Button>
-            </div>
+            <Card size="sm">
+              <CardContent className="flex flex-col gap-2">
+                <span className="text-xs font-medium text-muted-foreground uppercase">
+                  Pix copia e cola
+                </span>
+                <p className="font-mono text-xs break-all">
+                  {resultado.payload}
+                </p>
+                <BotaoCopiar
+                  texto={resultado.payload}
+                  rotulo="Copiar código"
+                  variant="outline"
+                  size="sm"
+                />
+              </CardContent>
+            </Card>
           ) : null}
 
           <Campo rotulo="Tamanho do PNG">

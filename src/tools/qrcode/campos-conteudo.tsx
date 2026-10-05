@@ -1,5 +1,6 @@
 'use client'
 
+import { CaixaDeSelecao } from '@/components/caixa-de-selecao'
 import { Campo } from '@/components/campo'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
@@ -179,17 +180,12 @@ const CamposConteudo = ({ tipo, dados, atualizar }: CamposConteudoProps) => {
               autoComplete="off"
             />
           </Campo>
-          <label className="flex items-center gap-2 self-end pb-1.5 text-sm">
-            <input
-              type="checkbox"
-              checked={dados.wifi.oculta}
-              onChange={(evento) =>
-                atualizar('wifi', { oculta: evento.target.checked })
-              }
-              className="size-4 accent-primary"
-            />
-            Rede oculta
-          </label>
+          <CaixaDeSelecao
+            rotulo="Rede oculta"
+            marcada={dados.wifi.oculta}
+            aoMudar={(oculta) => atualizar('wifi', { oculta })}
+            className="self-end pb-1.5"
+          />
           <div className="sm:col-span-2">
             <Nota>
               A senha não sai do seu navegador: o QR é gerado aqui mesmo.

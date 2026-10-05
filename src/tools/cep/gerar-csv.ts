@@ -1,6 +1,6 @@
-import type { Endereco } from './tipos'
+import { gerarCsv } from '@/lib/csv'
 
-const BOM_UTF8 = String.fromCharCode(0xfeff)
+import type { Endereco } from './tipos'
 
 const colunas = [
   'CEP',
@@ -13,24 +13,18 @@ const colunas = [
   'IBGE',
 ]
 
-const escapar = (valor: string) => `"${valor.replace(/"/g, '""')}"`
+const linhaDe = (endereco: Endereco) => [
+  endereco.cep,
+  endereco.logradouro,
+  endereco.complemento,
+  endereco.bairro,
+  endereco.cidade,
+  endereco.uf,
+  endereco.ddd,
+  endereco.ibge,
+]
 
-const linhaDe = (endereco: Endereco) =>
-  [
-    endereco.cep,
-    endereco.logradouro,
-    endereco.complemento,
-    endereco.bairro,
-    endereco.cidade,
-    endereco.uf,
-    endereco.ddd,
-    endereco.ibge,
-  ]
-    .map(escapar)
-    .join(';')
+const gerarCsvEnderecos = (enderecos: Endereco[]) =>
+  gerarCsv(colunas, enderecos.map(linhaDe))
 
-const gerarCsv = (enderecos: Endereco[]) =>
-  BOM_UTF8 +
-  [colunas.map(escapar).join(';'), ...enderecos.map(linhaDe)].join('\r\n')
-
-export { gerarCsv }
+export { gerarCsvEnderecos }

@@ -8,7 +8,9 @@ import { useMemo, useRef, useState } from 'react'
 import { encode } from 'uqr'
 
 import { Alerta } from '@/components/alerta'
-import { Campo } from '@/components/campo'
+import { BotaoOpcao } from '@/components/botao-opcao'
+import { CaixaDeSelecao } from '@/components/caixa-de-selecao'
+import { Campo, GrupoDeCampos } from '@/components/campo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -64,13 +66,12 @@ const OpcaoVisual = ({
   ativo,
   aoEscolher,
 }: OpcaoVisualProps) => (
-  <button
-    type="button"
-    aria-pressed={ativo}
+  <BotaoOpcao
+    ativo={ativo}
     onClick={aoEscolher}
     className={cn(
-      'flex flex-col items-center gap-1.5 rounded-lg border p-2 text-xs transition-colors hover:bg-muted',
-      ativo && 'border-primary bg-primary/5 ring-2 ring-primary/30',
+      'h-auto flex-col gap-1.5 p-2 text-xs',
+      ativo && 'ring-2 ring-primary/30',
     )}
   >
     <Image
@@ -82,7 +83,7 @@ const OpcaoVisual = ({
       className="size-16 object-contain"
     />
     {rotulo}
-  </button>
+  </BotaoOpcao>
 )
 
 const SeletorDeCor = ({
@@ -97,18 +98,21 @@ const SeletorDeCor = ({
   desabilitado?: boolean
 }) => (
   <Campo rotulo={rotulo}>
-    <div className="flex items-center gap-2">
-      <Input
-        type="color"
-        value={valor}
-        onChange={(evento) => aoMudar(evento.target.value)}
-        disabled={desabilitado}
-        className="h-9 w-14 cursor-pointer p-1"
-      />
-      <span className="font-mono text-xs text-muted-foreground uppercase">
-        {valor}
-      </span>
-    </div>
+    {(id) => (
+      <div className="flex items-center gap-2">
+        <Input
+          id={id}
+          type="color"
+          value={valor}
+          onChange={(evento) => aoMudar(evento.target.value)}
+          disabled={desabilitado}
+          className="h-9 w-14 cursor-pointer p-1"
+        />
+        <span className="font-mono text-xs text-muted-foreground uppercase">
+          {valor}
+        </span>
+      </div>
+    )}
   </Campo>
 )
 
@@ -201,7 +205,7 @@ const PainelDesign = ({ design, atualizar }: PainelDesignProps) => {
       </TabsContent>
 
       <TabsContent value="formato" className="flex flex-col gap-4 pt-2">
-        <Campo rotulo="Pontos">
+        <GrupoDeCampos rotulo="Pontos">
           <div className="grid grid-cols-3 gap-2">
             {estilosDePonto.map((estilo) => (
               <OpcaoVisual
@@ -213,9 +217,9 @@ const PainelDesign = ({ design, atualizar }: PainelDesignProps) => {
               />
             ))}
           </div>
-        </Campo>
+        </GrupoDeCampos>
 
-        <Campo rotulo="Cantos">
+        <GrupoDeCampos rotulo="Cantos">
           <div className="grid grid-cols-3 gap-2">
             {estilosDeCanto.map((estilo) => (
               <OpcaoVisual
@@ -227,7 +231,7 @@ const PainelDesign = ({ design, atualizar }: PainelDesignProps) => {
               />
             ))}
           </div>
-        </Campo>
+        </GrupoDeCampos>
       </TabsContent>
 
       <TabsContent value="cores" className="flex flex-col gap-4 pt-2">
@@ -245,17 +249,11 @@ const PainelDesign = ({ design, atualizar }: PainelDesignProps) => {
           />
         </div>
 
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={design.fundoTransparente}
-            onChange={(evento) =>
-              atualizar({ fundoTransparente: evento.target.checked })
-            }
-            className="size-4 accent-primary"
-          />
-          Fundo transparente
-        </label>
+        <CaixaDeSelecao
+          rotulo="Fundo transparente"
+          marcada={design.fundoTransparente}
+          aoMudar={(fundoTransparente) => atualizar({ fundoTransparente })}
+        />
       </TabsContent>
 
       <TabsContent value="logo" className="flex flex-col gap-4 pt-2">

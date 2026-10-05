@@ -6,10 +6,9 @@ import { useMemo } from 'react'
 
 import { Campo } from '@/components/campo'
 import { CampoSugestoes } from '@/components/campo-sugestoes'
+import { CampoUf } from '@/components/campo-uf'
 import { Button } from '@/components/ui/button'
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { normalizarTexto } from '@/lib/texto'
-import { ufs } from '@/shared/brasil/ufs'
 
 import { LIMITE_SUGESTOES, MINIMO_TERMO } from './constantes'
 import { useMunicipios } from './use-municipios'
@@ -116,20 +115,7 @@ const FormPorEndereco = ({
       onSubmit={enviar}
       className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_auto]"
     >
-      <Campo rotulo="Estado">
-        <NativeSelect
-          value={uf}
-          onChange={(evento) => aoMudarUf(evento.target.value)}
-          className="w-full"
-        >
-          <NativeSelectOption value="">Selecione…</NativeSelectOption>
-          {ufs.map((estado) => (
-            <NativeSelectOption key={estado.sigla} value={estado.sigla}>
-              {estado.nome} ({estado.sigla})
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-      </Campo>
+      <CampoUf valor={uf} aoMudar={aoMudarUf} />
 
       <Campo rotulo="Cidade / Município">
         <CampoSugestoes

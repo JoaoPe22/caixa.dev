@@ -1,11 +1,16 @@
 'use client'
 
 import { Command as CommandPrimitive } from 'cmdk'
-import { LoaderCircleIcon } from 'lucide-react'
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 import { useRef, useState } from 'react'
 
+import {
+  CommandItem,
+  CommandList,
+  CommandShortcut,
+} from '@/components/ui/command'
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
+import { Spinner } from '@/components/ui/spinner'
 
 type Sugestao = {
   valor: string
@@ -14,6 +19,7 @@ type Sugestao = {
 }
 
 type CampoSugestoesProps = {
+  id?: string
   rotulo: string
   valor: string
   aoMudar: (valor: string) => void
@@ -29,7 +35,29 @@ type CampoSugestoesProps = {
 const classeCampo =
   'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80'
 
+// O Chrome ignora autocomplete="off" em campos que parecem endereço e abre o
+// autofill por cima do popover. Um valor que ele não reconhece desliga o autofill.
+// O cmdk fixa "off" depois das props, por isso o valor é aplicado pelo ref.
+// O cmdk também fixa o próprio id (e depende dele para devolver o foco), então é o
+// rótulo externo que passa a apontar para o id do cmdk, e não o contrário.
+const AUTOCOMPLETE_NAO_RECONHECIDO = 'caixa-sugestoes'
+
+const ajustarInput = (input: HTMLInputElement | null, idDoRotulo?: string) => {
+  if (!input) {
+    return
+  }
+
+  input.setAttribute('autocomplete', AUTOCOMPLETE_NAO_RECONHECIDO)
+
+  if (idDoRotulo) {
+    document
+      .querySelector(`label[for="${CSS.escape(idDoRotulo)}"]`)
+      ?.setAttribute('for', input.id)
+  }
+}
+
 const CampoSugestoes = ({
+  id,
   rotulo,
   valor,
   aoMudar,
@@ -76,6 +104,7 @@ const CampoSugestoes = ({
         <PopoverAnchor asChild>
           <div ref={ancoraRef}>
             <CommandPrimitive.Input
+              ref={(input) => ajustarInput(input, id)}
               value={valor}
               onValueChange={(novo) => {
                 aoMudar(novo)
@@ -100,11 +129,11 @@ const CampoSugestoes = ({
             }
           }}
         >
-          <CommandPrimitive.List className="max-h-64 scroll-py-1 overflow-y-auto">
+          <CommandList className="max-h-64">
             {carregando ? (
               <CommandPrimitive.Loading>
                 <div className="flex items-center gap-2 px-2 py-2 text-sm text-muted-foreground">
-                  <LoaderCircleIcon className="size-4 animate-spin" />
+                  <Spinner aria-hidden />
                   Buscando…
                 </div>
               </CommandPrimitive.Loading>
@@ -117,21 +146,20 @@ const CampoSugestoes = ({
             ) : null}
 
             {sugestoes.map((sugestao) => (
-              <CommandPrimitive.Item
+              <CommandItem
                 key={sugestao.valor}
                 value={sugestao.valor}
                 onSelect={() => escolher(sugestao)}
-                className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-hidden select-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
               >
                 <span className="truncate">{sugestao.rotulo}</span>
                 {sugestao.detalhe ? (
-                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                  <CommandShortcut className="shrink-0 tracking-normal">
                     {sugestao.detalhe}
-                  </span>
+                  </CommandShortcut>
                 ) : null}
-              </CommandPrimitive.Item>
+              </CommandItem>
             ))}
-          </CommandPrimitive.List>
+          </CommandList>
 
           {rodape ? (
             <div className="mt-1 border-t px-2 pt-1.5 pb-0.5 text-xs text-muted-foreground">
